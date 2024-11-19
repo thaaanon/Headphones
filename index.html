@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headphone Channel Tester</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        button {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #leftBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #rightBtn {
+            background-color: #2196F3;
+            color: white;
+        }
+        #playBothBtn {
+            background-color: #9C27B0;
+            color: white;
+            margin-top: 1rem;
+        }
+        .active {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Headphone Channel Tester</h1>
+        <p>Make sure your headphones are properly connected and volume is at a comfortable level.</p>
+        
+        <div class="button-container">
+            <button id="leftBtn">Test Left Channel</button>
+            <button id="rightBtn">Test Right Channel</button>
+        </div>
+        
+        <button id="playBothBtn">Test Both Channels</button>
+        
+        <div class="status" id="status">
+            Ready to test. Click any button above to begin.
+        </div>
+    </div>
+
+    <script>
+        let audioContext;
+        let oscillator;
+        let gainNode;
+        
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioContext.createGain();
+                gainNode.connect(audioContext.destination);
+                gainNode.gain.value = 0.1; // Set volume to 10%
+            }
+        }
+
+        function playTone(channel) {
+            stopTone();
+            initAudio();
+            
+            oscillator = audioContext.createOscillator();
+            const panNode = audioContext.createStereoPanner();
+            
+            oscillator.connect(panNode);
+            panNode.connect(gainNode);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
+            
+            if (channel === 'left') {
+                panNode.pan.setValueAtTime(-1, audioContext.currentTime);
+                document.getElementById('status').textContent = 'Playing in LEFT channel';
+            } else if (channel === 'right') {
+                panNode.pan.setValueAtTime(1, audioContext.currentTime);
+                document.getElementById('status').textContent = 'Playing in RIGHT channel';
+            } else {
+                panNode.pan.setValueAtTime(0, audioContext.currentTime);
+                document.getElementById('status').textContent = 'Playing in BOTH channels';
+            }
+            
+            oscillator.start();
+            
+            // Stop after 1 second
+            setTimeout(() => {
+                stopTone();
+            }, 1000);
+        }
+
+        function stopTone() {
+            if (oscillator) {
+                oscillator.stop();
+                oscillator.disconnect();
+                document.getElementById('status').textContent = 'Ready to test. Click any button above to begin.';
+            }
+        }
+
+        document.getElementById('leftBtn').addEventListener('click', () => playTone('left'));
+        document.getElementById('rightBtn').addEventListener('click', () => playTone('right'));
+        document.getElementById('playBothBtn').addEventListener('click', () => playTone('both'));
+    </script>
+</body>
+</html>
